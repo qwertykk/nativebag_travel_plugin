@@ -4,7 +4,7 @@ const request = require('request');
 const cors = require('cors');
 const session = require('express-session');
 const app = express({mergeParams: true});
-
+const pug =  require('pug');
 
 var cart;
 var sid = null;
@@ -27,20 +27,22 @@ app.use(function (req, res, next) {
     // Pass to next layer of middleware
     next();
 });
-
-
-app.use(session({secret: 'ssshhhhh'}));
-
-app.get('/summary', function (req, res) {
-    res.render('summary.pug')
-});
+app.use(bodyParser.urlencoded({extended:true}));
+app.use(bodyParser.json());
+                                                                                                                                                                                                                                                
+//
+// app.use(session({secret: 'ssshhhhh'}));
+//
+// app.get('/summary', function (req, res) {
+//     res.render('summary.pug')
+// });
 
 app.get('/product_list/:place', function (req, res) {
     sid = req.query.sid;
     var location =  req.params.place;
     var products;
     var cart_items;
-    var cart_ids = [];
+    var cart_product_ids = [];
     request.get('http://api.test.nativebag.in/v1/product/exists?locationA=Tuticorin&locationB='+req.params.place+'&sid='+sid,
         function (error, response, product_list) {
         if (!error && response.statusCode == 200) {
@@ -51,19 +53,47 @@ app.get('/product_list/:place', function (req, res) {
                 form: {sid:sid}
                 }, function (error, response, body) {
                     body = JSON.parse(body);
-                    console.log(body);
+                    // console.log(body);
                     if(body.CartItems !== null) {
                         const totalMessages = Object.keys(body.CartItems).length;
                         for (var i = 0; i < totalMessages; i++) {
-                            cart_ids.push(body.CartItems[i].ProductId);
+                            cart_product_ids.push(body.CartItems[i].ProductId);
                         }
-                        console.log(cart_ids);
+                        // console.log(cart_product_ids);
                     }
                     cart_items = body.CartItems;
-                    cart_ids = JSON.stringify(cart_ids);
-                    res.render('native.pug', {location:location, product_name:products,
-                        cart_items:cart_ids, cart_products:cart_items, item_count:body.count, amount: body.totalAmount, sid: sid});
+                    cart_product_ids = JSON.stringify(cart_product_ids);
+                    console.log('just before');
+                    var locals = {
+                        location:location,
+                        product_name:products,
+                        cart_items:cart_product_ids,
+                        cart_products:cart_items,
+                        item_count:body.count,
+                        amount: body.totalAmount,
+                        sid: sid
+                    };
 
+                var fn =  pug.compileFile(
+                        __dirname+'/../views/native.pug'
+                    );
+                    var html = fn(locals);
+                    console.log(html);
+                    res.send(html);
+                    // res.sendFile(html);
+                    // res.sendFile(
+                    //     'native.pug',
+                    //     {
+                    //         location:location,
+                    //         product_name:products,
+                    //         cart_items:cart_product_ids,
+                    //         cart_products:cart_items,
+                    //         item_count:body.count,
+                    //         amount: body.totalAmount,
+                    //         sid: sid
+                    //     }
+                    //     );
+                console.log('just after');
             });
 
             // cart = body.cart;
@@ -71,29 +101,27 @@ app.get('/product_list/:place', function (req, res) {
     });
 });
 
-app.get('/cart',function(req, res) {
-    request.post({
-        url: 'http://api.test.nativebag.in/v1/cart/cart-items',
-        form: {sid:sid}
-    }, function (error, response, body) {
-        if(!error && response.statusCode === 200) {
-            var cart_ids = [];
-            if (body.CartItems !== null) {
-                console.log(body.CartItems);
-                // const totalMessages = Object.keys(body.CartItems).length;
-                // for (var i = 0; i < totalMessages; i++) {
-                //     cart_ids.push(body.CartItems[i].ProductId);
-                // }
-            }
-            body = JSON.parse(body);
-            console.log(body.CartItems);
-            res.send(body.CartItems);
-        }
-    });
-});
-
-app.use(bodyParser.urlencoded({extended:true}));
-app.use(bodyParser.json());
+// app.get('/cart',function(req, res) {
+//     request.post({
+//         url: 'http://api.test.nativebag.in/v1/cart/cart-items',
+//         form: {sid:sid}
+//     }, function (error, response, body) {
+//         if(!error && response.statusCode === 200) {
+//             var cart_ids = [];
+//             if (body.CartItems !== null) {
+//                 console.log(body.CartItems);
+//                 // const totalMessages = Object.keys(body.CartItems).length;
+//                 // for (var i = 0; i < totalMessages; i++) {
+//                 //     cart_ids.push(body.CartItems[i].ProductId);
+//                 // }
+//             }
+//             body = JSON.parse(body);
+//             console.log(body.CartItems);
+//             res.send(body.CartItems);
+//         }
+//     });
+// });
+//
 
 
 app.get('/sid', function (req, res) {
