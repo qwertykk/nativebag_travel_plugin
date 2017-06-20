@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>The working widget</title>
+		<meta charset="utf-8"/>
+		<script type="text/javascript" src="http://localhost:3000/javascripts/myjs.js"></script>
+	</head>
+	<body>
+		<div>
+			<button id="button">Click me!! Please</button>
+			<div id="NB_widget"></div>
+		</div>
+
+		<script type="text/javascript">
+			window.onload = function() {
+        			var head = document.getElementsByTagName('head')[0];
+			        var script_Jquery = document.createElement('script');
+        			script_Jquery.type = 'text/javascript';
+        			script_Jquery.onload = function () {
+        				$("button#button").on('click', function(){
+        					// console.log("loaded");
+        				});
+						$.ajax({
+					// url:"http://test.nativebag.in:3000/agra?sid=abcd",
+							url:'http://localhost:3000/product_list/agra?sid=abcd',
+							crossDomain:true,
+							type:"GET",
+							success:function(response){
+								// console.log(response);
+								$("#NB_widget").html(response);
+							}, 
+							error: function(jqXHR, exception){
+								console.log(jqXHR.status);
+								console.log(exception);
+							}
+						});
+   				     };
+        			script_Jquery.src = 'http://localhost:3000/javascripts/myjs.js';
+       				head.insertBefore(script_Jquery, head.firstChild);
+			    }
+			// });
+		</script>
+	</body>
+</html>
